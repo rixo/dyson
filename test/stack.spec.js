@@ -13,11 +13,13 @@ describe('dyson route stack', function() {
         var rawConfigs = {
             get: [
                 {
-                    path: '/endpoint/:id',
+                    path: '/endpoint/:id?',
                     template: {
                         id: function(params) {
                             return '/' + (params.id || 1);
-                        }
+                        },
+                        ownProp: 'mine',
+                        otherProp: 'override me!'
                     }
                 },
                 {
@@ -37,6 +39,16 @@ describe('dyson route stack', function() {
                     template: {
                         id: 'foo'
                     }
+                },
+                {
+                    path: '/endpoint/:id',
+                    match: function(req) {
+                        return req.params.id === 'override';
+                    },
+                    override: {
+                        id: 'override',
+                        otherProp: 'overridden!'
+                    }
                 }
             ]
         };
@@ -47,7 +59,8 @@ describe('dyson route stack', function() {
     });
 
     it('should respond with the route config with no match function if none other matches', function(done) {
-        request(app).get('/endpoint/3').expect(200, {"id": '/3'}, done);
+        var expected = {"id": '/3', "ownProp": "mine", "otherProp": "override me!"};
+        request(app).get('/endpoint/3').expect(200, expected, done);
     });
 
     it('should respond with the route config that first match', function(done) {
@@ -56,5 +69,10 @@ describe('dyson route stack', function() {
 
     it('should match a config even if param structure is not the same', function(done) {
         request(app).get('/endpoint/foo').expect(200, {"id": 'foo'}, done);
+    });
+
+    it('should override base values when an override object is present', function(done) {
+        var expected = {"id": 'override', "ownProp": "mine", "otherProp": "overridden!"};
+        request(app).get('/endpoint/override').expect(200, expected, done);
     });
 });
