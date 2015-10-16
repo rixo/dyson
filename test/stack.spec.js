@@ -52,10 +52,16 @@ describe('dyson route stack', function() {
                 },
                 {
                     path: '/resolve/:id',
+                    exposeRequest: true,
                     template: {
                         value: 'root',
-                        depending: function(params, query, body, cookies, headers, resolved) {
-                            return ':' + (resolved && resolved.value || 'root');
+                        depending: function(req, resolved) {
+                            return ':' + resolved.value;
+                        },
+                        nested: {
+                            value: function(req, resolved) {
+                                return '::' + resolved.value;
+                            }
                         }
                     }
                 }, {
@@ -94,12 +100,12 @@ describe('dyson route stack', function() {
     });
 
     it('should expose resolved overrides to following routes', function(done) {
-        var expected = {"value": 'child', "depending": ":child"};
+        var expected = {"value": 'child', "depending": ":child", "nested": {"value": "::child"}};
         request(app).get('/resolve/child').expect(200, expected, done);
     });
 
     it('should not expose resolved overrides if the child route does not match', function(done) {
-        var expected = {"value": 'root', "depending": ":root"};
+        var expected = {"value": 'root', "depending": ":root", "nested": {"value": "::root"}};
         request(app).get('/resolve/root').expect(200, expected, done);
     });
 });
