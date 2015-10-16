@@ -20,6 +20,7 @@ describe('dyson', function() {
                 'get': [
                     {
                         path: '/cache',
+                        cache: true,
                         template: {
                             id: _.uniqueId
                         }
