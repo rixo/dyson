@@ -49,6 +49,23 @@ describe('dyson route stack', function() {
                         id: 'override',
                         otherProp: 'overridden!'
                     }
+                },
+                {
+                    path: '/resolve/:id',
+                    template: {
+                        value: 'root',
+                        depending: function(params, query, body, cookies, headers, resolved) {
+                            return ':' + (resolved && resolved.value || 'root');
+                        }
+                    }
+                }, {
+                    path: '/resolve/:id',
+                    match: function(req) {
+                        return req.params.id === 'child';
+                    },
+                    override: {
+                        value: 'child'
+                    }
                 }
             ]
         };
@@ -74,5 +91,15 @@ describe('dyson route stack', function() {
     it('should override base values when an override object is present', function(done) {
         var expected = {"id": 'override', "ownProp": "mine", "otherProp": "overridden!"};
         request(app).get('/endpoint/override').expect(200, expected, done);
+    });
+
+    it('should expose resolved overrides to following routes', function(done) {
+        var expected = {"value": 'child', "depending": ":child"};
+        request(app).get('/resolve/child').expect(200, expected, done);
+    });
+
+    it('should not expose resolved overrides if the child route does not match', function(done) {
+        var expected = {"value": 'root', "depending": ":root"};
+        request(app).get('/resolve/root').expect(200, expected, done);
     });
 });
