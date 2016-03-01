@@ -254,13 +254,19 @@ var dyson = require('dyson'),
     path = require('path');
 
 var options = {
-    configDir: path.join(__dirname, 'services'),
+    // server options
     port: 8765
+    // config loader options
+    configDir: path.join(__dirname, 'services')
 };
 
 var configs = dyson.getConfigurations(options);
-var appBefore = dyson.createServer(options);
-var appAfter = dyson.registerServices(appBefore, options, configs);
+
+var services = dyson.services(options, configs);
+
+var app = dyson.createServer(serverOptions);
+
+app.use(services);
 
 console.log('Dyson listening at port', options.port);
 ```
@@ -278,7 +284,7 @@ var options = {
 
 var myApp = express();
 var configs = dyson.getConfigurations(options);
-dyson.registerServices(myApp, options, configs);
+myApp.use(dyson.services(options, configs));
 myApp.listen(8765);
 ```
 

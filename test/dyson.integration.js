@@ -14,8 +14,6 @@ describe('dyson', function() {
 
         before(function() {
 
-            app = dyson.createServer(options);
-
             configs = {
                 'get': [
                     {
@@ -80,7 +78,9 @@ describe('dyson', function() {
 
             defaults.assign(configs.get, 'get');
 
-            dyson.registerServices(app, options, configs);
+            app = dyson
+              .createServer(options)
+              .use(dyson.services(options, configs));
 
         });
 

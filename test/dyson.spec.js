@@ -5,26 +5,42 @@ var dyson = require('../lib/dyson'),
 
 describe('dyson', function() {
 
-    var app = express(),
-        options = {};
+    var options = {};
 
-    describe('.registerServices', function() {
+    describe('.services', function() {
+
+        var expressRouter;
+
+        var app;
 
         before(function() {
-            dyson.registerServices(app, options, {
-                get: [
-                    {
-                        path: '/',
-                        callback: function() {},
-                        render: function() {}
-                    }
-                ]
-            });
+
+            expressRouter = express.Router;
+
+            express.Router = function() {
+                return app;
+            }
+
         });
 
-        it('should add GET route to Express', function() {
+        after(function() {
 
-            var spy = sinon.spy(app, 'get');
+            express.Router = expressRouter;
+
+        });
+
+        beforeEach(function() {
+
+            app = {
+                get: sinon.spy(),
+                post: sinon.spy(),
+                use: sinon.spy(),
+                options: sinon.spy()
+            };
+
+        });
+
+        it('should add GET route to Router', function() {
 
             var config = {
                 get: [
@@ -36,20 +52,16 @@ describe('dyson', function() {
                 ]
             };
 
-            dyson.registerServices(app, options, config);
+            dyson.services(options, config);
 
-            spy.callCount.should.equal(1);
-            spy.firstCall.args[0].should.equal(config.get[0].path);
-            spy.firstCall.args.should.containEql(config.get[0].callback);
-            spy.firstCall.args.should.containEql(config.get[0].render);
-
-            app.get.restore();
+            app.get.callCount.should.equal(1);
+            app.get.firstCall.args[0].should.equal(config.get[0].path);
+            app.get.firstCall.args.should.containEql(config.get[0].callback);
+            app.get.firstCall.args.should.containEql(config.get[0].render);
 
         });
 
-        it('should add POST route to Express', function() {
-
-            var spy = sinon.spy(app, 'post');
+        it('should add POST route to Router', function() {
 
             var config = {
                 post: [
@@ -61,19 +73,21 @@ describe('dyson', function() {
                 ]
             };
 
-            dyson.registerServices(app, options, config);
+            dyson.services(options, config);
 
-            spy.callCount.should.equal(1);
-            spy.firstCall.args[0].should.equal(config.post[0].path);
-            spy.firstCall.args.should.containEql(config.post[0].callback);
-            spy.firstCall.args.should.containEql(config.post[0].render);
-
-            app.post.restore();
+            app.post.callCount.should.equal(1);
+            app.post.firstCall.args[0].should.equal(config.post[0].path);
+            app.post.firstCall.args.should.containEql(config.post[0].callback);
+            app.post.firstCall.args.should.containEql(config.post[0].render);
 
         });
     });
 
     describe('routes', function() {
+
+        var app;
+
+        var express = require('express');
 
         before(function() {
 
@@ -114,7 +128,8 @@ describe('dyson', function() {
                 ]
             };
 
-            dyson.registerServices(app, options, configs);
+            app = express()
+              .use(dyson.services(options, configs));
 
         });
 
